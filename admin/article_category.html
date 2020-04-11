@@ -51,5 +51,166 @@
             </table>
         </div>
     </div>
+    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                            aria-hidden="true">&times;</span></button>
+                    <h4 class="modal-title" id="myModalLabel">New message</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <input type="text" style="display: none;" id="id">
+                        <div class="form-group">
+                            <label for="recipient-name" class="control-label">分类名称:</label>
+                            <input type="text" class="form-control" id="recipient-name">
+                        </div>
+                        <div class="form-group">
+                            <label for="message-text" class="control-label">分类别名:</label>
+                            <input class="form-control" id="message-text">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default cancel" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary btn-queren">Send message</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="./libs/http.js"></script>
+    <script id='temps' type="text/html">
+        {{each data v}}
+        <tr>
+            <td>{{v.name}}</td>
+            <td>{{v.slug}}</td>
+            <td class="text-center">
+                <a href="javascript:void(0)" data-index="{{v.id}}" data-toggle="modal" data-target="#myModal" class=" btn btn-info btn-xs">编辑</a>
+                <a href="javascript:void(0)" data-index="{{v.id}}" class="btn btn-danger btn-xs btn-delate" >删除</a>
+            </td>
+        </tr>
+        {{/each}}
+    </script>
+    <script>
+        $(function () {
+            //加载数据
+            getData();
+            function getData() {
+                $.ajax({
+                    type: 'get',
+                    url: BigNew.category_list,
+                    success: function (backData) {
+                        if (backData.code == 200) {
+                            $('tbody').html(template('temps', backData));
+                        }
+                    }
+                });
+            }
+            //根据模态框relatedTarget 来判断谁触发了模态框
+            $('#myModal').on('show.bs.modal', function (e) {
+                if (e.relatedTarget == $('#xinzengfenlei')[0]) {
+
+
+                    $('#recipient-name').val("");
+                    $('#message-text').val("");
+                    // alert('我市新增');
+                    $('#myModalLabel').text('新增类别');
+                    $('.btn-queren').text('新增').addClass('btn-primary').removeClass('btn-success');
+                } else {
+                    $('#myModalLabel').text('修改类别');
+                    $('.btn-queren').text('编辑').addClass('btn-success').removeClass('btn-primary');
+                    console.log(e.relatedTarget);
+                    $('#recipient-name').val($(e.relatedTarget).parent().prev().prev().text());
+                    $('#message-text').val($(e.relatedTarget).parent().prev().text());
+                    $('#id').val($(e.relatedTarget).attr('data-index'));
+                }
+            });
+            //新增编辑类别
+            $('.btn-queren').on('click', function () {
+
+                if ($(this).hasClass('btn-primary')) {
+                    //新增
+                    let userName = $('#recipient-name').val().trim();
+                    let userSlug = $('#message-text').val().trim();
+                    if (userName == "" || userSlug == "") {
+                        alert('类名和别类不能为空');
+                        return;
+                    }
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.category_add,
+                        data: {
+                            name: userName,
+                            slug: userSlug
+                        },
+                        success: function (backData) {
+                            if (backData.code == 201) {
+                                alert(backData.msg);
+                                getData();
+                                $('#myModal').modal('hide');
+                            }
+                        }
+                    })
+                } else {
+                    //编辑
+                    let userName = $('#recipient-name').val();
+                    let userSlug = $('#message-text').val();
+                    let id = $('#id').val();
+                    if (userName == "" || userSlug == "") {
+                        alert('类名和别类不能为空');
+                        return;
+                    }
+                    $.ajax({
+                        type: 'post',
+                        url: BigNew.category_edit,
+                        data: {
+                            id: id,
+                            name: userName,
+                            slug: userSlug
+                        },
+                        success: function (backData) {
+                            if (backData.code == 200) {
+                                alert(backData.msg);
+                                getData();
+                                $('#myModal').modal('hide');
+                            } else {
+                                alert('不能与原来内容相同');
+                            }
+                        }
+                    })
+                }
+            })
+            $('#myModal .cancel').on('click', function (e) {
+                // do something...
+                //清空文本框数据 ：这是DOM原生的方法
+                // $('#form')[0].reset();
+                $('form')[0].reset();
+                //隐藏模态框
+                $('#myModal').modal('hide')
+            });
+            //删除
+            $('tbody').on('click', '.btn-delate', function () {
+                let that = this;
+                console.log(this);
+
+                $.ajax({
+                    type: 'post',
+                    url: BigNew.category_delete,
+                    data: {
+                        id: $(that).attr('data-index')
+                    },
+                    success: function (backData) {
+                        console.log(backData);
+                        if (backData.code == 204) {
+                            alert(backData.msg);
+                            getData();
+                        }
+                    }
+                })
+            })
+        })
+    </script>
+</body>
 
 </html>
