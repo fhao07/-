@@ -13,7 +13,7 @@
 
 <body>
     <div class="header">
-        <a href="#" class="logo fl"><img src="images/logo.png" alt="logo"></a>
+        <a href="./index.html" class="logo fl"><img src="images/logo.png" alt="logo"></a>
         <div class="search_form fl">
             <input type="text" class="search_txt" placeholder="黑洞照片">
             <button class="search_btn"><i class="fa fa-search"></i></button>
@@ -208,7 +208,96 @@
     <!-- 引入模板引擎js文件 -->
     <script src="./js/template-web.js"></script>
     <script src="./js/jquery-1.12.4.min.js"></script>
+    <script id="pl_temp" type="text/html">
+        {{each data v}}
+        <div class="comment_detail_list">
+            <div class="person_pic fl">{{v.author.substr(0,1)}}</div>
+            <div class="name_time fl"><b>{{v.author}}</b><span>{{v.date}}  {{v.time}}</span></div>
+            <div class="comment_text fl">
+                {{v.content}}
+            </div>
+        </div>
+        {{/each}}
+    </script>
+    <script>
+        $(function () {
+            let id = window.location.search.split("=")[1];
+            if (!id) {
+                alert('请返回首页');
+                window.location.href = './index.html'
+            }
+            $.ajax({
+                type: 'get',
+                url: 'http://localhost:8080/api/v1/index/article',
+                data: {
+                    id: id
+                },
+                success: function (backData) {
+                    if (backData.code = 200) {
+                        $('.breadcrumb>a').eq(1).text(backData.data.category);
+                        $('.article_title').text(backData.data.title);
+                        $('.article_info').html(`管理员 发布于 ${backData.data.date}&nbsp;&nbsp;&nbsp;分类: ${backData.data.category}&nbsp;&nbsp;&nbsp;阅读:
+        (${backData.data.read})&nbsp;&nbsp;&nbsp;评论: (${backData.data.comments})`);
+                        $('.article_con').html(backData.data.content);
+                        if (backData.data.prev) {
+                            $('.article_links>a:eq(0)').text(backData.data.prev.title);
+                            $('.article_links>a:eq(0)').attr('href', './article.html?id=' + backData.data.prev.id);
+                        } else {
+                            $('.article_links>a:eq(0)').text('亲，没有上一篇了');
+                            $('.article_links>a:eq(0)').attr('href', 'javascript:null');
+                        };
+                        if (backData.data.next) {
+                            $('.article_links>a:eq(1)').text(backData.data.next.title);
+                            $('.article_links>a:eq(1)').attr('href', './article.html?id=' + backData.data.next.id);
+                        } else {
+                            $('.article_links>a:eq(1)').text('亲，没有下一篇了');
+                            $('.article_links>a:eq(1)').attr('href', 'javascript:null');
+                        };
+                    }
+                }
 
+            });
+            $.ajax({
+                type: 'get',
+                url: 'http://localhost:8080/api/v1/index/get_comment',
+                data: {
+                    articleId: id
+                },
+                success: function (backData) {
+
+                    if (backData.code == 200) {
+                        $('.comment_count').text(`${backData.data.length}条评论`)
+                        $('.comment_list_con').html(template('pl_temp', backData));
+                    }
+                }
+            });
+            $('.comment_sub').on('click', function (e) {
+                e.preventDefault();
+                let username = $('.comment_name').val().trim();
+                let content = $('.comment_input').val().trim();
+                if (username == "" || content == "") {
+                    alert('用户名或者评论不能为空');
+                    return;
+                }
+                $.ajax({
+                    type: 'post',
+                    url: 'http://localhost:8080/api/v1/index/post_comment',
+                    data: {
+                        articleId: id,
+                        content: content,
+                        author: username
+                    },
+                    success: function (backData) {
+                        if (backData.code == 201) {
+                            alert(backData.msg);
+                            $('.comment_name').val("");
+                            $('.comment_input').val("");
+                        }
+                    }
+                })
+            })
+        })
+    </script>
 </body>
 
 </html>

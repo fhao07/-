@@ -16,7 +16,7 @@
 
 <body>
     <div class="header">
-        <a href="#" class="logo fl"><img src="images/logo.png" alt="logo"></a>
+        <a href="./index.html" class="logo fl"><img src="images/logo.png" alt="logo"></a>
         <div class="search_form fl">
             <input type="text" class="search_txt" placeholder="黑洞照片">
             <button class="search_btn"><i class="fa fa-search"></i></button>
@@ -228,5 +228,44 @@
     <!-- 导包template -->
     <script src="./js/template-web.js"></script>
 </body>
+<script id="search_temp" type="text/html">
+    {{each data.data v}}
+    <div class="common_news_list">
+        <a href="./article.html?id={{v.id}}" class="list_pic"><img src="{{v.cover}}" alt=""></a>
+        <h4><a href="./article.html?id={{v.id}}">{{v.title}}</a></h4>
+        <p>{{@ v.intro}}</p>
+        <div class="new_info">
+            <span>标签：{{v.category}}&nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp;<i class="fa fa-eye"></i>&nbsp;阅读({{v.read}})&nbsp;&nbsp;&nbsp;<i class="fa fa-commenting"></i>&nbsp;评论( {{v.comments}} )</span>
+            <b>发布于 {{v.date}} </b>
+        </div>
+    </div>
+    {{/each}}
+</script>
+<script>
+    $(function () {
+        let search = window.location.search.split("=")[1];
+        if (!search) {
+            alert('请返回首页');
+            window.location.href = './index.html'
+        };
+        if (window.location.search.split("=")[0] == '?id') {
+            $.ajax({
+                type: 'get',
+                url: 'http://localhost:8080/api/v1/index/search',
+                data: {
+                    type: search
+                },
+                success: function (backData) {
+                    $('.setfr').html(`<div class="list_title"><h3>${backData.data.data[0].category}</h3></div>` + template('search_temp', backData));
+                }
+
+            })
+        } else {
+            console.log('搜索进来的');
+
+        }
+
+    })
+</script>
 
 </html>
